@@ -13,10 +13,14 @@ pub struct Config {
 pub struct DatabaseConfig {
     pub alias: String,
     pub engine: DatabaseEngine,
-    pub host: String,
-    pub port: u16,
-    pub user: String,
-    pub password: String,
+    #[serde(default)]
+    pub host: Option<String>,
+    #[serde(default)]
+    pub port: Option<u16>,
+    #[serde(default)]
+    pub user: Option<String>,
+    #[serde(default)]
+    pub password: Option<String>,
     #[serde(default)]
     pub database: Option<String>,
     #[serde(default)]
@@ -32,12 +36,10 @@ pub enum DatabaseEngine {
 
 impl Config {
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let content = fs::read_to_string(path.as_ref()).map_err(|_| {
-            DbJumpError::ConfigNotFound(path.as_ref().display().to_string())
-        })?;
+        let content = fs::read_to_string(path.as_ref())
+            .map_err(|_| DbJumpError::ConfigNotFound(path.as_ref().display().to_string()))?;
 
-        toml::from_str(&content)
-            .map_err(|e| DbJumpError::ConfigParseError(e.to_string()))
+        toml::from_str(&content).map_err(|e| DbJumpError::ConfigParseError(e.to_string()))
     }
 
     pub fn find_by_alias(&self, alias: &str) -> Result<&DatabaseConfig> {
@@ -54,35 +56,39 @@ impl Config {
 
 impl DatabaseConfig {
     pub fn format_info(&self, hide_password: bool) -> String {
-        let password_display = if hide_password {
-            "***".to_string()
-        } else {
-            self.password.clone()
-        };
+        let mut lines = vec![format!("  Alias: {}", self.alias)];
+        lines.push(format!("  Engine: {:?}", self.engine));
 
-        let db_display = self
-            .database
-            .as_ref()
-            .map(|d| format!("\n  Database: {}", d))
-            .unwrap_or_default();
+        if let Some(ref host) = self.host {
+            lines.push(format!("  Host: {}", host));
+        }
 
-        let options_display = if !self.options.is_empty() {
-            format!("\n  Options: {}", self.options.join(" "))
-        } else {
-            String::new()
-        };
+        if let Some(port) = self.port {
+            lines.push(format!("  Port: {}", port));
+        }
 
-        format!(
-            "Alias: {}\n  Engine: {:?}\n  Host: {}\n  Port: {}\n  User: {}\n  Password: {}{}{}",
-            self.alias,
-            self.engine,
-            self.host,
-            self.port,
-            self.user,
-            password_display,
-            db_display,
-            options_display
-        )
+        if let Some(ref user) = self.user {
+            lines.push(format!("  User: {}", user));
+        }
+
+        if let Some(ref password) = self.password {
+            let password_display = if hide_password {
+                "***".to_string()
+            } else {
+                password.clone()
+            };
+            lines.push(format!("  Password: {}", password_display));
+        }
+
+        if let Some(ref database) = self.database {
+            lines.push(format!("  Database: {}", database));
+        }
+
+        if !self.options.is_empty() {
+            lines.push(format!("  Options: {}", self.options.join(" ")));
+        }
+
+        lines.join("\n")
     }
 }
 
@@ -108,5 +114,22 @@ options = ["--multiline"]
         assert_eq!(config.database.len(), 1);
         assert_eq!(config.database[0].alias, "test-db");
         assert_eq!(config.database[0].engine, DatabaseEngine::ClickHouse);
+    }
+
+    #[test]
+    fn test_parse_config_minimal() {
+        let toml_str = r#"
+[[database]]
+alias = "minimal-db"
+engine = "clickhouse"
+        "#;
+
+        let config: Config = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.database.len(), 1);
+        assert_eq!(config.database[0].alias, "minimal-db");
+        assert!(config.database[0].host.is_none());
+        assert!(config.database[0].port.is_none());
+        assert!(config.database[0].user.is_none());
+        assert!(config.database[0].password.is_none());
     }
 }

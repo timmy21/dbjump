@@ -16,8 +16,8 @@
 
 ## 支持的数据库
 
-- ✅ ClickHouse
-- ✅ PostgreSQL
+- ✅ ClickHouse (使用 `clickhouse client` 命令)
+- ✅ PostgreSQL (使用 `psql` 命令)
 
 更多数据库支持即将到来...
 
@@ -27,48 +27,68 @@
 
 - Rust 工具链（用于编译）
 - 要连接的数据库对应的 CLI 工具：
-  - ClickHouse: `clickhouse-client`
-  - PostgreSQL: `psql`
+  - ClickHouse: `clickhouse` 命令行工具
+  - PostgreSQL: `psql` 命令行工具
 
 ### 编译和安装
 
-```bash
-# 克隆仓库
-git clone <repository-url>
-cd dbjump
+#### 1. 编译二进制文件
 
-# 运行安装脚本
-./scripts/install.sh
+```bash
+cd dbjump
+cargo build --release
 ```
 
-安装脚本会：
-1. 编译 release 版本的二进制文件
-2. 安装到 `~/.local/bin/dbjump`
-3. 生成 shell 补全脚本
-4. 安装 oh-my-zsh 插件（如果检测到 oh-my-zsh）
+#### 2. 安装二进制文件
 
-### 启用插件
+```bash
+# 复制到 PATH 中的目录
+cp target/release/dbjump ~/.local/bin/
+# 或者
+sudo cp target/release/dbjump /usr/local/bin/
+```
 
-#### 使用 Oh-My-Zsh
+确保安装目录在 PATH 中：
 
-编辑 `~/.zshrc`，在 plugins 数组中添加 `dbjump`：
+```bash
+# 如果使用 ~/.local/bin，确保它在 PATH 中
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+#### 3. 安装 Oh-My-Zsh 插件（可选但推荐）
+
+```bash
+# 生成补全脚本
+dbjump completions zsh > oh-my-zsh/dbjump/_dbjump
+
+# 复制插件到 oh-my-zsh
+mkdir -p ~/.oh-my-zsh/custom/plugins/dbjump
+cp -r oh-my-zsh/dbjump/* ~/.oh-my-zsh/custom/plugins/dbjump/
+```
+
+然后编辑 `~/.zshrc`，在 plugins 数组中添加 `dbjump`：
 
 ```bash
 plugins=(git docker ... dbjump)
 ```
 
-然后重新加载配置：
+重新加载配置：
 
 ```bash
 source ~/.zshrc
 ```
 
-#### 手动加载（不使用 Oh-My-Zsh）
+#### 4. 手动加载插件（不使用 Oh-My-Zsh）
 
-在 `~/.zshrc` 中添加：
+如果不使用 oh-my-zsh，可以直接 source 插件文件：
 
 ```bash
-source ~/.config/dbjump/plugin/dbjump.plugin.zsh
+# 生成补全脚本
+dbjump completions zsh > oh-my-zsh/dbjump/_dbjump
+
+# 在 ~/.zshrc 中添加
+source /path/to/dbjump/oh-my-zsh/dbjump/dbjump.plugin.zsh
 ```
 
 ## 使用方法
@@ -87,9 +107,10 @@ dbjump init
 vim ~/.config/dbjump/config.toml
 ```
 
-添加数据库连接配置：
+添加数据库连接配置。**注意：所有连接参数（host, port, user, password）都是可选的**，如果不指定，将使用数据库 CLI 工具的默认值。
 
 ```toml
+# ClickHouse - 完整配置
 [[database]]
 alias = "prod-clickhouse"
 engine = "clickhouse"
@@ -100,6 +121,13 @@ password = "secret123"
 database = "default"  # 可选
 options = ["--multiline"]  # 可选
 
+# ClickHouse - 使用默认值（localhost:9000, user=default）
+[[database]]
+alias = "local-clickhouse"
+engine = "clickhouse"
+# 不指定任何参数，使用 clickhouse client 的默认值
+
+# PostgreSQL - 完整配置
 [[database]]
 alias = "dev-postgres"
 engine = "postgresql"
@@ -109,6 +137,12 @@ user = "postgres"
 password = "devpass"
 database = "myapp"  # 可选
 options = []  # 可选
+
+# PostgreSQL - 使用默认值（localhost:5432, user=$USER）
+[[database]]
+alias = "local-postgres"
+engine = "postgresql"
+database = "mydb"  # 只指定数据库名
 ```
 
 ### 3. 验证配置
@@ -185,7 +219,9 @@ export DBJUMP_CONFIG=/path/to/your/config.toml
 `dbjump` 是一个配置管理工具，它不直接实现数据库连接，而是：
 
 1. 读取配置文件中的连接参数
-2. 构建对应数据库 CLI 工具的命令
+2. 构建对应数据库 CLI 工具的命令：
+   - ClickHouse: `clickhouse client [参数]`
+   - PostgreSQL: `psql [参数]`
 3. 在 Unix 系统上使用 `exec()` 替换当前进程，完整保留交互式体验
 4. 在非 Unix 系统上使用 `spawn()` 执行命令
 
@@ -194,31 +230,11 @@ export DBJUMP_CONFIG=/path/to/your/config.toml
 - 所有数据库特性都可用（历史记录、快捷键等）
 - 无需为每个数据库实现连接逻辑
 
-## 开发
+### 参数优先级
 
-### 运行测试
+所有连接参数都是可选的。当参数未在配置文件中指定时，数据库 CLI 工具将使用其默认值：
 
-```bash
-cargo test
-```
+- **ClickHouse**: 默认 `localhost:9000`, user=`default`
+- **PostgreSQL**: 默认 `localhost:5432`, user=当前系统用户
 
-### 本地开发
-
-```bash
-# 编译
-cargo build
-
-# 运行
-cargo run -- init
-cargo run -- list
-
-# 格式化
-cargo fmt
-
-# 检查
-cargo clippy
-```
-
-## 贡献
-
-欢迎提交 Issue 和 Pull Request！
+这样可以最小化配置文件的复杂度，只需指定与默认值不同的参数。

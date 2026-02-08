@@ -10,15 +10,26 @@ impl DatabaseConnector for ClickHouseConnector {
     fn build_command(&self, config: &DatabaseConfig) -> Result<Command> {
         self.check_availability()?;
 
-        let mut cmd = Command::new(self.cli_tool_name());
+        let mut cmd = Command::new("clickhouse");
+        cmd.arg("client");
 
-        // Basic connection parameters
-        cmd.arg("-h").arg(&config.host);
-        cmd.arg("--port").arg(config.port.to_string());
-        cmd.arg("-u").arg(&config.user);
-        cmd.arg("--password").arg(&config.password);
+        // Optional connection parameters (only add if specified)
+        if let Some(ref host) = config.host {
+            cmd.arg("-h").arg(host);
+        }
 
-        // Optional database
+        if let Some(port) = config.port {
+            cmd.arg("--port").arg(port.to_string());
+        }
+
+        if let Some(ref user) = config.user {
+            cmd.arg("-u").arg(user);
+        }
+
+        if let Some(ref password) = config.password {
+            cmd.arg("--password").arg(password);
+        }
+
         if let Some(ref database) = config.database {
             cmd.arg("--database").arg(database);
         }
@@ -32,7 +43,7 @@ impl DatabaseConnector for ClickHouseConnector {
     }
 
     fn cli_tool_name(&self) -> &str {
-        "clickhouse-client"
+        "clickhouse"
     }
 
     fn check_availability(&self) -> Result<()> {
@@ -55,10 +66,10 @@ mod tests {
         DatabaseConfig {
             alias: "test".to_string(),
             engine: DatabaseEngine::ClickHouse,
-            host: "localhost".to_string(),
-            port: 9000,
-            user: "default".to_string(),
-            password: "secret".to_string(),
+            host: Some("localhost".to_string()),
+            port: Some(9000),
+            user: Some("default".to_string()),
+            password: Some("secret".to_string()),
             database: Some("mydb".to_string()),
             options: vec!["--multiline".to_string()],
         }
@@ -69,11 +80,12 @@ mod tests {
         let connector = ClickHouseConnector;
         let config = create_test_config();
 
-        // This will fail if clickhouse-client is not installed, which is expected
+        // This will fail if clickhouse is not installed, which is expected
         let result = connector.build_command(&config);
 
         if let Ok(cmd) = result {
             let args: Vec<&std::ffi::OsStr> = cmd.get_args().collect();
+            assert!(args.contains(&std::ffi::OsStr::new("client")));
             assert!(args.contains(&std::ffi::OsStr::new("-h")));
             assert!(args.contains(&std::ffi::OsStr::new("localhost")));
         }

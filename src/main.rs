@@ -16,6 +16,14 @@ fn run() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
+        Some(Commands::Connect { alias, extra_args }) => {
+            let config = load_config()?;
+            let db_config = config.find_by_alias(&alias)?;
+            let connector = get_connector(&db_config.engine);
+            execute_connection(db_config, connector, &extra_args)?;
+            Ok(())
+        }
+
         Some(Commands::Init { force }) => {
             let path = dbjump::config::path::init_config_file(force)?;
             println!("Configuration file created at: {}", path.display());
@@ -30,10 +38,20 @@ fn run() -> Result<()> {
                 dbjump::cli::args::ListFormat::Text => {
                     println!("Configured databases:");
                     for db in &config.database {
-                        println!(
-                            "  {} ({:?}) - {}:{}",
-                            db.alias, db.engine, db.host, db.port
-                        );
+                        let address = if let Some(host) = &db.host {
+                            if let Some(port) = &db.port {
+                                Some(format!("{}:{}", host, port))
+                            } else {
+                                Some(host.clone())
+                            }
+                        } else {
+                            None
+                        };
+                        if let Some(address) = address {
+                            println!("  {} ({:?}) - {}", db.alias, db.engine, address);
+                        } else {
+                            println!("  {} ({:?})", db.alias, db.engine);
+                        }
                     }
                 }
                 dbjump::cli::args::ListFormat::Json => {
@@ -65,20 +83,9 @@ fn run() -> Result<()> {
         }
 
         None => {
-            // Connection mode
-            let alias = cli.alias.ok_or_else(|| {
-                DbJumpError::ConfigError(
-                    "Please provide a database alias or use a subcommand. Try 'dbjump --help'."
-                        .to_string(),
-                )
-            })?;
-
-            let config = load_config()?;
-            let db_config = config.find_by_alias(&alias)?;
-            let connector = get_connector(&db_config.engine);
-
-            execute_connection(db_config, connector, &cli.extra_args)?;
-            Ok(())
+            Err(DbJumpError::ConfigError(
+                "Please provide a command. Try 'dbjump --help'.".to_string(),
+            ))
         }
     }
 }

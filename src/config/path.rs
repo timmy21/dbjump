@@ -15,9 +15,10 @@ pub fn get_config_path() -> Result<PathBuf> {
     }
 
     // Use ~/.config/dbjump/config.toml
-    let config_dir = dirs::config_dir()
-        .ok_or_else(|| DbJumpError::ConfigError("Cannot determine config directory".to_string()))?
-        .join(CONFIG_DIR_NAME);
+    let home_dir = dirs::home_dir()
+        .ok_or_else(|| DbJumpError::ConfigError("Cannot determine home directory".to_string()))?;
+
+    let config_dir = home_dir.join(".config").join(CONFIG_DIR_NAME);
 
     Ok(config_dir.join(DEFAULT_CONFIG_NAME))
 }
@@ -50,8 +51,11 @@ pub fn init_config_file(force: bool) -> Result<PathBuf> {
 
     let template = r#"# dbjump configuration file
 # Add your database connections below
+#
+# Note: All connection parameters (host, port, user, password) are optional.
+# If not specified, the database CLI tool will use its default values.
 
-# Example ClickHouse connection:
+# Example ClickHouse connection (with all parameters):
 # [[database]]
 # alias = "prod-clickhouse"
 # engine = "clickhouse"
@@ -61,6 +65,12 @@ pub fn init_config_file(force: bool) -> Result<PathBuf> {
 # password = "secret123"
 # database = "default"  # optional
 # options = ["--multiline"]  # optional
+
+# Example ClickHouse connection (using defaults):
+# [[database]]
+# alias = "local-clickhouse"
+# engine = "clickhouse"
+# # Will use clickhouse defaults: localhost:9000, user=default
 
 # Example PostgreSQL connection:
 # [[database]]
@@ -72,6 +82,12 @@ pub fn init_config_file(force: bool) -> Result<PathBuf> {
 # password = "devpass"
 # database = "myapp"  # optional
 # options = []  # optional
+
+# Example PostgreSQL connection (using defaults):
+# [[database]]
+# alias = "local-postgres"
+# engine = "postgresql"
+# # Will use psql defaults: localhost:5432, user=$USER
 "#;
 
     fs::write(&config_path, template)?;

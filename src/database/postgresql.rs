@@ -12,15 +12,23 @@ impl DatabaseConnector for PostgreSQLConnector {
 
         let mut cmd = Command::new(self.cli_tool_name());
 
-        // Set PGPASSWORD environment variable
-        cmd.env("PGPASSWORD", &config.password);
+        // Optional connection parameters (only add if specified)
+        if let Some(ref password) = config.password {
+            cmd.env("PGPASSWORD", password);
+        }
 
-        // Basic connection parameters
-        cmd.arg("-h").arg(&config.host);
-        cmd.arg("-p").arg(config.port.to_string());
-        cmd.arg("-U").arg(&config.user);
+        if let Some(ref host) = config.host {
+            cmd.arg("-h").arg(host);
+        }
 
-        // Optional database
+        if let Some(port) = config.port {
+            cmd.arg("-p").arg(port.to_string());
+        }
+
+        if let Some(ref user) = config.user {
+            cmd.arg("-U").arg(user);
+        }
+
         if let Some(ref database) = config.database {
             cmd.arg("-d").arg(database);
         }
@@ -57,10 +65,10 @@ mod tests {
         DatabaseConfig {
             alias: "test".to_string(),
             engine: DatabaseEngine::PostgreSQL,
-            host: "localhost".to_string(),
-            port: 5432,
-            user: "postgres".to_string(),
-            password: "secret".to_string(),
+            host: Some("localhost".to_string()),
+            port: Some(5432),
+            user: Some("postgres".to_string()),
+            password: Some("secret".to_string()),
             database: Some("mydb".to_string()),
             options: vec![],
         }

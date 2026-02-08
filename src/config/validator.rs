@@ -17,31 +17,39 @@ pub fn validate_config(config: &Config) -> Result<()> {
             return Err(DbJumpError::InvalidAliasFormat(db.alias.clone()));
         }
 
-        // Check required fields are not empty
-        if db.host.is_empty() {
-            return Err(DbJumpError::MissingField(format!(
-                "host for alias '{}'",
-                db.alias
-            )));
+        // Check optional fields if provided
+        if let Some(ref host) = db.host {
+            if host.is_empty() {
+                return Err(DbJumpError::MissingField(format!(
+                    "host for alias '{}' cannot be empty",
+                    db.alias
+                )));
+            }
         }
 
-        if db.user.is_empty() {
-            return Err(DbJumpError::MissingField(format!(
-                "user for alias '{}'",
-                db.alias
-            )));
+        if let Some(ref user) = db.user {
+            if user.is_empty() {
+                return Err(DbJumpError::MissingField(format!(
+                    "user for alias '{}' cannot be empty",
+                    db.alias
+                )));
+            }
         }
 
-        if db.password.is_empty() {
-            return Err(DbJumpError::MissingField(format!(
-                "password for alias '{}'",
-                db.alias
-            )));
+        if let Some(ref password) = db.password {
+            if password.is_empty() {
+                return Err(DbJumpError::MissingField(format!(
+                    "password for alias '{}' cannot be empty",
+                    db.alias
+                )));
+            }
         }
 
-        // Port validation (1-65535)
-        if db.port == 0 {
-            return Err(DbJumpError::InvalidPort(db.port));
+        // Port validation (1-65535) if provided
+        if let Some(port) = db.port {
+            if port == 0 {
+                return Err(DbJumpError::InvalidPort(port));
+            }
         }
     }
 
@@ -64,10 +72,10 @@ mod tests {
         DatabaseConfig {
             alias: alias.to_string(),
             engine: DatabaseEngine::ClickHouse,
-            host: "localhost".to_string(),
-            port: 9000,
-            user: "user".to_string(),
-            password: "pass".to_string(),
+            host: Some("localhost".to_string()),
+            port: Some(9000),
+            user: Some("user".to_string()),
+            password: Some("pass".to_string()),
             database: None,
             options: vec![],
         }

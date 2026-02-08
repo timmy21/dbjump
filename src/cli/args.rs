@@ -8,20 +8,22 @@ use clap::{Parser, Subcommand};
     long_about = "dbjump helps you quickly connect to databases using short aliases instead of remembering connection parameters."
 )]
 pub struct Cli {
-    /// Database alias to connect to
-    #[arg(value_name = "ALIAS")]
-    pub alias: Option<String>,
-
-    /// Extra arguments to pass to the database CLI tool
-    #[arg(trailing_var_arg = true)]
-    pub extra_args: Vec<String>,
-
     #[command(subcommand)]
     pub command: Option<Commands>,
 }
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
+    /// Connect to a database
+    Connect {
+        /// Database alias
+        alias: String,
+
+        /// Extra arguments to pass to the database CLI tool
+        #[arg(trailing_var_arg = true)]
+        extra_args: Vec<String>,
+    },
+
     /// Initialize configuration file
     Init {
         /// Overwrite existing configuration
