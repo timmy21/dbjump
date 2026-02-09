@@ -53,10 +53,28 @@ pub enum Commands {
         #[arg(value_name = "SHELL")]
         shell: clap_complete::Shell,
     },
+
+    /// Generate shell integration code
+    Shell {
+        /// Shell type
+        #[arg(value_name = "SHELL")]
+        shell: ShellType,
+
+        /// Custom command name for quick connect
+        #[arg(long, default_value = "j")]
+        cmd: String,
+    },
 }
 
 #[derive(Debug, Clone, clap::ValueEnum)]
 pub enum ListFormat {
     Text,
     Json,
+}
+
+#[derive(Debug, Clone, clap::ValueEnum)]
+pub enum ShellType {
+    Zsh,
+    Bash,
+    Fish,
 }

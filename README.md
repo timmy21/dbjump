@@ -11,7 +11,7 @@
 - 🔒 **安全设计**：自动设置配置文件权限（600），密码不泄露到进程列表
 - 🎯 **原生体验**：调用原生 CLI 工具，保持完整交互功能
 - 🎨 **Fzf 集成**：支持交互式选择和实时预览
-- ⚡ **Shell 补全**：通过 oh-my-zsh 插件提供智能补全
+- ⚡ **Shell 集成**：自动配置 `j` 快捷命令（可自定义）和智能补全
 - 📦 **单一可执行文件**：Rust 编写，无需额外依赖
 
 ## 支持的数据库
@@ -59,9 +59,6 @@ source ~/.zshrc
 #### 3. 安装 Oh-My-Zsh 插件（可选但推荐）
 
 ```bash
-# 生成补全脚本
-dbjump completions zsh > oh-my-zsh/dbjump/_dbjump
-
 # 复制插件到 oh-my-zsh
 mkdir -p ~/.oh-my-zsh/custom/plugins/dbjump
 cp -r oh-my-zsh/dbjump/* ~/.oh-my-zsh/custom/plugins/dbjump/
@@ -79,16 +76,16 @@ plugins=(git docker ... dbjump)
 source ~/.zshrc
 ```
 
-#### 4. 手动加载插件（不使用 Oh-My-Zsh）
+#### 4. 手动集成（不使用 Oh-My-Zsh）
 
-如果不使用 oh-my-zsh，可以直接 source 插件文件：
+如果您不使用 Oh-My-Zsh，可以在 `~/.zshrc` 中添加以下内容来启用 Shell 集成（包含 `j` 快捷命令和补全）：
 
 ```bash
-# 生成补全脚本
-dbjump completions zsh > oh-my-zsh/dbjump/_dbjump
-
 # 在 ~/.zshrc 中添加
-source /path/to/dbjump/oh-my-zsh/dbjump/dbjump.plugin.zsh
+eval "$(dbjump shell zsh)"
+
+# 如果想自定义快捷命令名称（默认为 j）
+# eval "$(dbjump shell --cmd myjump zsh)"
 ```
 
 ## 使用方法
@@ -153,18 +150,36 @@ dbjump validate
 
 ### 4. 连接数据库
 
-#### 直接连接（通过别名）
+#### 使用快捷命令 `j` (推荐)
+
+Shell 集成提供了 `j` 命令（默认），它是连接功能的简写。
 
 ```bash
-dbjump prod-clickhouse
+# 交互式选择 (需要 fzf)
+j
+
+# 直接连接
+j prod-clickhouse
+
+# 传递额外参数
+j prod-clickhouse --query "SELECT 1"
+```
+
+#### 使用完整命令
+
+```bash
+# 直接连接
+dbjump connect prod-clickhouse
 ```
 
 #### 交互式选择（使用 fzf）
 
-如果安装了 fzf，直接运行 `dbjump` 不带参数：
+如果安装了 fzf，直接运行 `dbjump` 或 `j` 不带参数：
 
 ```bash
-dbjump
+dbjump connect
+# 或
+j
 ```
 
 这会打开一个交互式界面，让您：
@@ -193,6 +208,9 @@ dbjump info prod-clickhouse
 
 # 生成 shell 补全脚本
 dbjump completions zsh
+
+# 生成 shell 集成脚本
+dbjump shell zsh
 ```
 
 ## 配置

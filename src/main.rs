@@ -1,5 +1,5 @@
 use clap::Parser;
-use dbjump::cli::{generate_completions, Cli, Commands};
+use dbjump::cli::{generate_completions, generate_shell_init, Cli, Commands};
 use dbjump::config::{get_config_path, validate_config, Config};
 use dbjump::database::{execute_connection, get_connector};
 use dbjump::error::{DbJumpError, Result};
@@ -36,22 +36,8 @@ fn run() -> Result<()> {
             let config = load_config()?;
             match format {
                 dbjump::cli::args::ListFormat::Text => {
-                    println!("Configured databases:");
                     for db in &config.database {
-                        let address = if let Some(host) = &db.host {
-                            if let Some(port) = &db.port {
-                                Some(format!("{}:{}", host, port))
-                            } else {
-                                Some(host.clone())
-                            }
-                        } else {
-                            None
-                        };
-                        if let Some(address) = address {
-                            println!("  {} ({:?}) - {}", db.alias, db.engine, address);
-                        } else {
-                            println!("  {} ({:?})", db.alias, db.engine);
-                        }
+                        println!("{}", db.alias);
                     }
                 }
                 dbjump::cli::args::ListFormat::Json => {
@@ -79,6 +65,11 @@ fn run() -> Result<()> {
 
         Some(Commands::Completions { shell }) => {
             generate_completions(shell);
+            Ok(())
+        }
+
+        Some(Commands::Shell { shell, cmd }) => {
+            generate_shell_init(shell, &cmd);
             Ok(())
         }
 
