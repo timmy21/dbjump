@@ -32,6 +32,8 @@ pub struct DatabaseConfig {
 pub enum DatabaseEngine {
     ClickHouse,
     PostgreSQL,
+    MySQL,
+    MongoDB,
 }
 
 impl Config {

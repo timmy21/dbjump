@@ -10,7 +10,7 @@ pub fn generate_shell_init(shell: ShellType, cmd: &str) {
 }
 
 fn generate_zsh_init(cmd: &str) -> String {
-    format!(include_str!("../shells/init.zsh"), cmd = cmd)
+    format!(include_str!("../shells/init.zsh.template"), cmd = cmd)
 }
 
 fn generate_bash_init(_cmd: &str) -> String {

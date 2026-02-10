@@ -18,8 +18,8 @@
 
 - ✅ ClickHouse (使用 `clickhouse client` 命令)
 - ✅ PostgreSQL (使用 `psql` 命令)
-
-更多数据库支持即将到来...
+- ✅ MySQL (使用 `mysql` 命令)
+- ✅ MongoDB (使用 `mongosh` 命令)
 
 ## 安装
 
@@ -29,6 +29,8 @@
 - 要连接的数据库对应的 CLI 工具：
   - ClickHouse: `clickhouse` 命令行工具
   - PostgreSQL: `psql` 命令行工具
+  - MySQL: `mysql` 命令行工具
+  - MongoDB: `mongosh` 命令行工具
 
 ### 编译和安装
 
@@ -140,6 +142,37 @@ options = []  # 可选
 alias = "local-postgres"
 engine = "postgresql"
 database = "mydb"  # 只指定数据库名
+
+# MySQL - 完整配置
+[[database]]
+alias = "dev-mysql"
+engine = "mysql"
+host = "localhost"
+port = 3306
+user = "root"
+password = "secret123"
+database = "myapp"
+
+# MySQL - 使用默认值（localhost:3306）
+[[database]]
+alias = "local-mysql"
+engine = "mysql"
+database = "mydb"
+
+# MongoDB - 完整配置
+[[database]]
+alias = "dev-mongo"
+engine = "mongodb"
+host = "localhost"
+port = 27017
+user = "admin"
+password = "secret123"
+database = "myapp"
+
+# MongoDB - 使用默认值（localhost:27017）
+[[database]]
+alias = "local-mongo"
+engine = "mongodb"
 ```
 
 ### 3. 验证配置
@@ -231,6 +264,8 @@ export DBJUMP_CONFIG=/path/to/your/config.toml
 - 配置文件自动设置 600 权限（仅所有者可读写）
 - ClickHouse 密码通过 `--password` 参数传递
 - PostgreSQL 密码通过 `PGPASSWORD` 环境变量传递，不出现在进程列表中
+- MySQL 密码通过 `MYSQL_PWD` 环境变量传递，不出现在进程列表中
+- MongoDB 密码通过连接字符串传递
 
 ## 工作原理
 
@@ -240,6 +275,8 @@ export DBJUMP_CONFIG=/path/to/your/config.toml
 2. 构建对应数据库 CLI 工具的命令：
    - ClickHouse: `clickhouse client [参数]`
    - PostgreSQL: `psql [参数]`
+   - MySQL: `mysql [参数]`
+   - MongoDB: `mongosh [连接字符串] [参数]`
 3. 在 Unix 系统上使用 `exec()` 替换当前进程，完整保留交互式体验
 4. 在非 Unix 系统上使用 `spawn()` 执行命令
 
@@ -254,5 +291,7 @@ export DBJUMP_CONFIG=/path/to/your/config.toml
 
 - **ClickHouse**: 默认 `localhost:9000`, user=`default`
 - **PostgreSQL**: 默认 `localhost:5432`, user=当前系统用户
+- **MySQL**: 默认 `localhost:3306`, user=当前系统用户
+- **MongoDB**: 默认 `localhost:27017`
 
 这样可以最小化配置文件的复杂度，只需指定与默认值不同的参数。
