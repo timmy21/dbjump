@@ -9,9 +9,10 @@ use std::os::unix::process::CommandExt;
 
 pub fn execute_connection(
     config: &DatabaseConfig,
-    connector: Box<dyn DatabaseConnector>,
+    connector: &dyn DatabaseConnector,
     extra_args: &[String],
 ) -> Result<()> {
+    connector.check_availability()?;
     let mut cmd = connector.build_command(config)?;
 
     // Add extra arguments

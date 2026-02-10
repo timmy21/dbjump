@@ -262,10 +262,10 @@ export DBJUMP_CONFIG=/path/to/your/config.toml
 
 - 配置目录自动设置 700 权限（仅所有者可访问）
 - 配置文件自动设置 600 权限（仅所有者可读写）
-- ClickHouse 密码通过 `--password` 参数传递
+- ClickHouse 密码通过 `CLICKHOUSE_PASSWORD` 环境变量传递，不出现在进程列表中
 - PostgreSQL 密码通过 `PGPASSWORD` 环境变量传递，不出现在进程列表中
 - MySQL 密码通过 `MYSQL_PWD` 环境变量传递，不出现在进程列表中
-- MongoDB 密码通过连接字符串传递
+- MongoDB 密码通过连接字符串传递（用户名和密码会自动进行 URL 编码）
 
 ## 工作原理
 

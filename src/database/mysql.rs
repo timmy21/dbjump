@@ -2,14 +2,12 @@ use std::process::Command;
 
 use crate::config::DatabaseConfig;
 use crate::database::types::DatabaseConnector;
-use crate::error::{DbJumpError, Result};
+use crate::error::Result;
 
 pub struct MySQLConnector;
 
 impl DatabaseConnector for MySQLConnector {
     fn build_command(&self, config: &DatabaseConfig) -> Result<Command> {
-        self.check_availability()?;
-
         let mut cmd = Command::new(self.cli_tool_name());
 
         // Password via env var to avoid process list exposure
@@ -45,16 +43,6 @@ impl DatabaseConnector for MySQLConnector {
     fn cli_tool_name(&self) -> &str {
         "mysql"
     }
-
-    fn check_availability(&self) -> Result<()> {
-        which::which(self.cli_tool_name())
-            .map_err(|_| DbJumpError::CliToolNotFound(self.cli_tool_name().to_string()))?;
-        Ok(())
-    }
-
-    fn format_preview(&self, config: &DatabaseConfig) -> String {
-        config.format_info(true)
-    }
 }
 
 #[cfg(test)]
@@ -80,17 +68,15 @@ mod tests {
         let connector = MySQLConnector;
         let config = create_test_config();
 
-        // This will fail if mysql is not installed, which is expected
-        let result = connector.build_command(&config);
-
-        if let Ok(cmd) = result {
-            let args: Vec<&std::ffi::OsStr> = cmd.get_args().collect();
-            assert!(args.contains(&std::ffi::OsStr::new("-h")));
-            assert!(args.contains(&std::ffi::OsStr::new("localhost")));
-            assert!(args.contains(&std::ffi::OsStr::new("-u")));
-            assert!(args.contains(&std::ffi::OsStr::new("root")));
-            // Database should be the last positional arg
-            assert_eq!(args.last(), Some(&std::ffi::OsStr::new("mydb")));
-        }
+        let cmd = connector.build_command(&config).unwrap();
+        let args: Vec<&std::ffi::OsStr> = cmd.get_args().collect();
+        assert!(args.contains(&std::ffi::OsStr::new("-h")));
+        assert!(args.contains(&std::ffi::OsStr::new("localhost")));
+        assert!(args.contains(&std::ffi::OsStr::new("-u")));
+        assert!(args.contains(&std::ffi::OsStr::new("root")));
+        // Database should be the last positional arg
+        assert_eq!(args.last(), Some(&std::ffi::OsStr::new("mydb")));
+        // Password should not be in args (passed via MYSQL_PWD env var)
+        assert!(!args.contains(&std::ffi::OsStr::new("secret")));
     }
 }

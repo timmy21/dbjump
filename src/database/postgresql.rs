@@ -2,14 +2,12 @@ use std::process::Command;
 
 use crate::config::DatabaseConfig;
 use crate::database::types::DatabaseConnector;
-use crate::error::{DbJumpError, Result};
+use crate::error::Result;
 
 pub struct PostgreSQLConnector;
 
 impl DatabaseConnector for PostgreSQLConnector {
     fn build_command(&self, config: &DatabaseConfig) -> Result<Command> {
-        self.check_availability()?;
-
         let mut cmd = Command::new(self.cli_tool_name());
 
         // Optional connection parameters (only add if specified)
@@ -44,16 +42,6 @@ impl DatabaseConnector for PostgreSQLConnector {
     fn cli_tool_name(&self) -> &str {
         "psql"
     }
-
-    fn check_availability(&self) -> Result<()> {
-        which::which(self.cli_tool_name())
-            .map_err(|_| DbJumpError::CliToolNotFound(self.cli_tool_name().to_string()))?;
-        Ok(())
-    }
-
-    fn format_preview(&self, config: &DatabaseConfig) -> String {
-        config.format_info(true)
-    }
 }
 
 #[cfg(test)]
@@ -79,13 +67,15 @@ mod tests {
         let connector = PostgreSQLConnector;
         let config = create_test_config();
 
-        // This will fail if psql is not installed, which is expected
-        let result = connector.build_command(&config);
-
-        if let Ok(cmd) = result {
-            let args: Vec<&std::ffi::OsStr> = cmd.get_args().collect();
-            assert!(args.contains(&std::ffi::OsStr::new("-h")));
-            assert!(args.contains(&std::ffi::OsStr::new("localhost")));
-        }
+        let cmd = connector.build_command(&config).unwrap();
+        let args: Vec<&std::ffi::OsStr> = cmd.get_args().collect();
+        assert!(args.contains(&std::ffi::OsStr::new("-h")));
+        assert!(args.contains(&std::ffi::OsStr::new("localhost")));
+        assert!(args.contains(&std::ffi::OsStr::new("-U")));
+        assert!(args.contains(&std::ffi::OsStr::new("postgres")));
+        assert!(args.contains(&std::ffi::OsStr::new("-d")));
+        assert!(args.contains(&std::ffi::OsStr::new("mydb")));
+        // Password should not be in args (passed via PGPASSWORD env var)
+        assert!(!args.contains(&std::ffi::OsStr::new("secret")));
     }
 }

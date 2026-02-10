@@ -1,14 +1,5 @@
 use std::path::Path;
 
-/// Mask password for display
-pub fn mask_password(password: &str) -> String {
-    if password.is_empty() {
-        String::new()
-    } else {
-        "***".to_string()
-    }
-}
-
 /// Set file permissions to 600 (owner read/write only)
 #[cfg(unix)]
 pub fn set_permissions_600(path: &Path) -> std::io::Result<()> {

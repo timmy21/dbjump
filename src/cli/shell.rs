@@ -14,9 +14,11 @@ fn generate_zsh_init(cmd: &str) -> String {
 }
 
 fn generate_bash_init(_cmd: &str) -> String {
-    "# Bash support coming soon\n".to_string()
+    eprintln!("Warning: Bash shell integration is not yet supported. Only Zsh is currently available.");
+    String::new()
 }
 
 fn generate_fish_init(_cmd: &str) -> String {
-    "# Fish support coming soon\n".to_string()
+    eprintln!("Warning: Fish shell integration is not yet supported. Only Zsh is currently available.");
+    String::new()
 }

@@ -20,7 +20,7 @@ fn run() -> Result<()> {
             let config = load_config()?;
             let db_config = config.find_by_alias(&alias)?;
             let connector = get_connector(&db_config.engine);
-            execute_connection(db_config, connector, &extra_args)?;
+            execute_connection(db_config, connector.as_ref(), &extra_args)?;
             Ok(())
         }
 

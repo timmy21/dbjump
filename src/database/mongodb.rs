@@ -2,9 +2,29 @@ use std::process::Command;
 
 use crate::config::DatabaseConfig;
 use crate::database::types::DatabaseConnector;
-use crate::error::{DbJumpError, Result};
+use crate::error::Result;
 
 pub struct MongoDBConnector;
+
+/// Percent-encode a string for use in a MongoDB connection URI.
+/// Encodes characters that are special in URIs: : / ? # [ ] @
+fn uri_encode(input: &str) -> String {
+    let mut encoded = String::with_capacity(input.len());
+    for byte in input.bytes() {
+        match byte {
+            b':' => encoded.push_str("%3A"),
+            b'/' => encoded.push_str("%2F"),
+            b'?' => encoded.push_str("%3F"),
+            b'#' => encoded.push_str("%23"),
+            b'[' => encoded.push_str("%5B"),
+            b']' => encoded.push_str("%5D"),
+            b'@' => encoded.push_str("%40"),
+            b'%' => encoded.push_str("%25"),
+            _ => encoded.push(byte as char),
+        }
+    }
+    encoded
+}
 
 impl MongoDBConnector {
     fn build_connection_string(&self, config: &DatabaseConfig) -> Option<String> {
@@ -20,12 +40,12 @@ impl MongoDBConnector {
 
         let mut uri = String::from("mongodb://");
 
-        // User/password credentials
+        // User/password credentials (percent-encoded)
         if let Some(ref user) = config.user {
-            uri.push_str(user);
+            uri.push_str(&uri_encode(user));
             if let Some(ref password) = config.password {
                 uri.push(':');
-                uri.push_str(password);
+                uri.push_str(&uri_encode(password));
             }
             uri.push('@');
         }
@@ -51,8 +71,6 @@ impl MongoDBConnector {
 
 impl DatabaseConnector for MongoDBConnector {
     fn build_command(&self, config: &DatabaseConfig) -> Result<Command> {
-        self.check_availability()?;
-
         let mut cmd = Command::new(self.cli_tool_name());
 
         if let Some(conn_string) = self.build_connection_string(config) {
@@ -69,16 +87,6 @@ impl DatabaseConnector for MongoDBConnector {
 
     fn cli_tool_name(&self) -> &str {
         "mongosh"
-    }
-
-    fn check_availability(&self) -> Result<()> {
-        which::which(self.cli_tool_name())
-            .map_err(|_| DbJumpError::CliToolNotFound(self.cli_tool_name().to_string()))?;
-        Ok(())
-    }
-
-    fn format_preview(&self, config: &DatabaseConfig) -> String {
-        config.format_info(true)
     }
 }
 
@@ -146,14 +154,27 @@ mod tests {
         let connector = MongoDBConnector;
         let config = create_test_config();
 
-        // This will fail if mongosh is not installed, which is expected
-        let result = connector.build_command(&config);
+        let cmd = connector.build_command(&config).unwrap();
+        let args: Vec<&std::ffi::OsStr> = cmd.get_args().collect();
+        assert!(args.contains(&std::ffi::OsStr::new(
+            "mongodb://admin:secret@localhost:27017/mydb"
+        )));
+    }
 
-        if let Ok(cmd) = result {
-            let args: Vec<&std::ffi::OsStr> = cmd.get_args().collect();
-            assert!(args.contains(&std::ffi::OsStr::new(
-                "mongodb://admin:secret@localhost:27017/mydb"
-            )));
-        }
+    #[test]
+    fn test_build_connection_string_special_chars() {
+        let connector = MongoDBConnector;
+        let config = DatabaseConfig {
+            alias: "test".to_string(),
+            engine: DatabaseEngine::MongoDB,
+            host: Some("localhost".to_string()),
+            port: Some(27017),
+            user: Some("user@domain".to_string()),
+            password: Some("p@ss:word/123".to_string()),
+            database: None,
+            options: vec![],
+        };
+        let uri = connector.build_connection_string(&config).unwrap();
+        assert_eq!(uri, "mongodb://user%40domain:p%40ss%3Aword%2F123@localhost:27017");
     }
 }

@@ -38,8 +38,12 @@ pub enum DatabaseEngine {
 
 impl Config {
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let content = fs::read_to_string(path.as_ref())
-            .map_err(|_| DbJumpError::ConfigNotFound(path.as_ref().display().to_string()))?;
+        let content = fs::read_to_string(path.as_ref()).map_err(|e| match e.kind() {
+            std::io::ErrorKind::NotFound => {
+                DbJumpError::ConfigNotFound(path.as_ref().display().to_string())
+            }
+            _ => DbJumpError::IoError(e),
+        })?;
 
         toml::from_str(&content).map_err(|e| DbJumpError::ConfigParseError(e.to_string()))
     }
