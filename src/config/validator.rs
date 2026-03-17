@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use crate::config::Config;
+use crate::database::get_connector;
 use crate::error::{DbJumpError, Result};
 
 pub fn validate_config(config: &Config) -> Result<()> {
@@ -17,9 +18,9 @@ pub fn validate_config(config: &Config) -> Result<()> {
             return Err(DbJumpError::InvalidAliasFormat(db.alias.clone()));
         }
 
-        // Check optional fields if provided
+        // Check optional string fields are not empty or whitespace-only
         if let Some(ref host) = db.host {
-            if host.is_empty() {
+            if host.trim().is_empty() {
                 return Err(DbJumpError::MissingField(format!(
                     "host for alias '{}' cannot be empty",
                     db.alias
@@ -28,7 +29,7 @@ pub fn validate_config(config: &Config) -> Result<()> {
         }
 
         if let Some(ref user) = db.user {
-            if user.is_empty() {
+            if user.trim().is_empty() {
                 return Err(DbJumpError::MissingField(format!(
                     "user for alias '{}' cannot be empty",
                     db.alias
@@ -37,7 +38,7 @@ pub fn validate_config(config: &Config) -> Result<()> {
         }
 
         if let Some(ref password) = db.password {
-            if password.is_empty() {
+            if password.trim().is_empty() {
                 return Err(DbJumpError::MissingField(format!(
                     "password for alias '{}' cannot be empty",
                     db.alias
@@ -51,6 +52,10 @@ pub fn validate_config(config: &Config) -> Result<()> {
                 return Err(DbJumpError::InvalidPort(port));
             }
         }
+
+        // Check if the CLI tool for this engine is available
+        let connector = get_connector(&db.engine);
+        connector.check_availability()?;
     }
 
     Ok(())
@@ -105,6 +110,29 @@ mod tests {
         assert!(matches!(
             validate_config(&config),
             Err(DbJumpError::DuplicateAlias(_))
+        ));
+    }
+
+    #[test]
+    fn test_whitespace_only_fields_rejected() {
+        let mut db = create_test_config("db1");
+        db.host = Some("   ".to_string());
+        let config = Config {
+            database: vec![db],
+        };
+        assert!(matches!(
+            validate_config(&config),
+            Err(DbJumpError::MissingField(_))
+        ));
+
+        let mut db = create_test_config("db2");
+        db.user = Some("  \t ".to_string());
+        let config = Config {
+            database: vec![db],
+        };
+        assert!(matches!(
+            validate_config(&config),
+            Err(DbJumpError::MissingField(_))
         ));
     }
 }

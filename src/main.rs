@@ -1,6 +1,6 @@
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 use dbjump::cli::{generate_completions, generate_shell_init, Cli, Commands};
-use dbjump::config::{get_config_path, validate_config, Config};
+use dbjump::config::{get_config_path, validate_config, Config, DatabaseConfig};
 use dbjump::database::{execute_connection, get_connector};
 use dbjump::error::{DbJumpError, Result};
 use std::process;
@@ -40,28 +40,16 @@ fn run() -> Result<()> {
             }
             match format {
                 dbjump::cli::args::ListFormat::Text => {
-                    let alias_width = config
-                        .database
-                        .iter()
-                        .map(|db| db.alias.len())
-                        .max()
-                        .unwrap_or(5)
-                        .max(5);
-                    let engine_width = config
-                        .database
-                        .iter()
-                        .map(|db| db.engine.to_string().len())
-                        .max()
-                        .unwrap_or(6)
-                        .max(6);
+                    let alias_w = column_width(&config.database, |db| db.alias.len(), 5);
+                    let engine_w = column_width(&config.database, |db| db.engine.to_string().len(), 6);
 
                     println!(
                         "  {:<alias_w$}  {:<engine_w$}  {}",
                         "ALIAS",
                         "ENGINE",
                         "CONNECTION",
-                        alias_w = alias_width,
-                        engine_w = engine_width,
+                        alias_w = alias_w,
+                        engine_w = engine_w,
                     );
 
                     for db in &config.database {
@@ -70,8 +58,8 @@ fn run() -> Result<()> {
                             db.alias,
                             db.engine,
                             db.format_summary(),
-                            alias_w = alias_width,
-                            engine_w = engine_width,
+                            alias_w = alias_w,
+                            engine_w = engine_w,
                         );
                     }
                 }
@@ -114,11 +102,14 @@ fn run() -> Result<()> {
         }
 
         None => {
-            Err(DbJumpError::ConfigError(
-                "Please provide a command. Try 'dbjump --help'.".to_string(),
-            ))
+            Cli::command().print_help().ok();
+            Ok(())
         }
     }
+}
+
+fn column_width(databases: &[DatabaseConfig], f: fn(&DatabaseConfig) -> usize, min: usize) -> usize {
+    databases.iter().map(f).max().unwrap_or(min).max(min)
 }
 
 fn load_config() -> Result<Config> {

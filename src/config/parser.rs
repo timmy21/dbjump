@@ -27,13 +27,44 @@ pub struct DatabaseConfig {
     pub options: Vec<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Serialize, Clone, PartialEq)]
 pub enum DatabaseEngine {
     ClickHouse,
     PostgreSQL,
     MySQL,
     MongoDB,
+}
+
+impl DatabaseEngine {
+    fn from_str(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "clickhouse" => Some(Self::ClickHouse),
+            "postgresql" | "postgres" => Some(Self::PostgreSQL),
+            "mysql" => Some(Self::MySQL),
+            "mongodb" | "mongo" => Some(Self::MongoDB),
+            _ => None,
+        }
+    }
+
+    pub fn all_names() -> &'static [&'static str] {
+        &["clickhouse", "postgresql", "postgres", "mysql", "mongodb", "mongo"]
+    }
+}
+
+impl<'de> Deserialize<'de> for DatabaseEngine {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        DatabaseEngine::from_str(&s).ok_or_else(|| {
+            serde::de::Error::custom(format!(
+                "unknown engine '{}', expected one of: {}",
+                s,
+                Self::all_names().join(", ")
+            ))
+        })
+    }
 }
 
 impl Config {
@@ -154,6 +185,44 @@ options = ["--multiline"]
         assert_eq!(config.database.len(), 1);
         assert_eq!(config.database[0].alias, "test-db");
         assert_eq!(config.database[0].engine, DatabaseEngine::ClickHouse);
+    }
+
+    #[test]
+    fn test_parse_engine_case_insensitive() {
+        for engine_str in &["clickhouse", "ClickHouse", "CLICKHOUSE", "Clickhouse"] {
+            let toml_str = format!(
+                r#"
+[[database]]
+alias = "test"
+engine = "{}"
+"#,
+                engine_str
+            );
+            let config: Config = toml::from_str(&toml_str).unwrap();
+            assert_eq!(config.database[0].engine, DatabaseEngine::ClickHouse);
+        }
+
+        // "postgres" should also be accepted as an alias for PostgreSQL
+        let toml_str = r#"
+[[database]]
+alias = "test"
+engine = "postgres"
+"#;
+        let config: Config = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.database[0].engine, DatabaseEngine::PostgreSQL);
+    }
+
+    #[test]
+    fn test_parse_engine_unknown() {
+        let toml_str = r#"
+[[database]]
+alias = "test"
+engine = "oracle"
+"#;
+        let result: std::result::Result<Config, _> = toml::from_str(toml_str);
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("unknown engine 'oracle'"));
     }
 
     #[test]

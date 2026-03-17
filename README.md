@@ -108,6 +108,8 @@ vim ~/.config/dbjump/config.toml
 
 添加数据库连接配置。**注意：所有连接参数（host, port, user, password）都是可选的**，如果不指定，将使用数据库 CLI 工具的默认值。
 
+引擎名称大小写不敏感，`clickhouse`、`ClickHouse`、`CLICKHOUSE` 均可。另外 `postgres` 是 `postgresql` 的别名，`mongo` 是 `mongodb` 的别名。
+
 ```toml
 # ClickHouse - 完整配置
 [[database]]
@@ -181,6 +183,8 @@ engine = "mongodb"
 dbjump validate
 ```
 
+验证内容包括：别名格式和唯一性、字段非空（含空白字符检查）、端口范围，以及对应数据库 CLI 工具是否已安装在 PATH 中。
+
 ### 4. 连接数据库
 
 #### 使用快捷命令 `j` (推荐)
@@ -230,8 +234,11 @@ dbjump prod-clickhouse --query "SELECT version()"
 ### 5. 其他命令
 
 ```bash
-# 列出所有配置的数据库
+# 列出所有配置的数据库（表格形式，包含别名、引擎和连接地址）
 dbjump list
+
+# 仅输出别名（适合脚本使用）
+dbjump list --format plain
 
 # 以 JSON 格式列出
 dbjump list --format json
@@ -245,6 +252,8 @@ dbjump completions zsh
 # 生成 shell 集成脚本
 dbjump shell zsh
 ```
+
+不带任何子命令运行 `dbjump` 会显示帮助信息。
 
 ## 配置
 
