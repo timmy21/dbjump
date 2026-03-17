@@ -16,9 +16,4 @@ pub trait DatabaseConnector {
             .map_err(|_| DbJumpError::CliToolNotFound(self.cli_tool_name().to_string()))?;
         Ok(())
     }
-
-    /// Format a preview string for display (e.g., in fzf)
-    fn format_preview(&self, config: &DatabaseConfig) -> String {
-        config.format_info(true)
-    }
 }

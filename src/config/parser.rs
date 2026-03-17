@@ -86,9 +86,6 @@ impl Config {
             .ok_or_else(|| DbJumpError::AliasNotFound(alias.to_string()))
     }
 
-    pub fn get_all_aliases(&self) -> Vec<String> {
-        self.database.iter().map(|db| db.alias.clone()).collect()
-    }
 }
 
 impl std::fmt::Display for DatabaseEngine {
