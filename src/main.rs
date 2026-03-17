@@ -34,8 +34,48 @@ fn run() -> Result<()> {
 
         Some(Commands::List { format }) => {
             let config = load_config()?;
+            if config.database.is_empty() {
+                println!("No databases configured. Run 'dbjump init' to get started.");
+                return Ok(());
+            }
             match format {
                 dbjump::cli::args::ListFormat::Text => {
+                    let alias_width = config
+                        .database
+                        .iter()
+                        .map(|db| db.alias.len())
+                        .max()
+                        .unwrap_or(5)
+                        .max(5);
+                    let engine_width = config
+                        .database
+                        .iter()
+                        .map(|db| db.engine.to_string().len())
+                        .max()
+                        .unwrap_or(6)
+                        .max(6);
+
+                    println!(
+                        "  {:<alias_w$}  {:<engine_w$}  {}",
+                        "ALIAS",
+                        "ENGINE",
+                        "CONNECTION",
+                        alias_w = alias_width,
+                        engine_w = engine_width,
+                    );
+
+                    for db in &config.database {
+                        println!(
+                            "  {:<alias_w$}  {:<engine_w$}  {}",
+                            db.alias,
+                            db.engine,
+                            db.format_summary(),
+                            alias_w = alias_width,
+                            engine_w = engine_width,
+                        );
+                    }
+                }
+                dbjump::cli::args::ListFormat::Plain => {
                     for db in &config.database {
                         println!("{}", db.alias);
                     }

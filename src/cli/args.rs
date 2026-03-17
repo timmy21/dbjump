@@ -69,6 +69,7 @@ pub enum Commands {
 #[derive(Debug, Clone, clap::ValueEnum)]
 pub enum ListFormat {
     Text,
+    Plain,
     Json,
 }
 

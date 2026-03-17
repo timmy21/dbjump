@@ -9,7 +9,7 @@ _DBJUMP_CACHE_VALID=0
 function _dbjump_refresh_cache() {{
     if command -v dbjump >/dev/null 2>&1; then
         local output
-        output=$(command dbjump list --format text 2>/dev/null)
+        output=$(command dbjump list --format plain 2>/dev/null)
         if [[ $? -eq 0 && -n "$output" ]]; then
             _DBJUMP_ALIASES_CACHE=(${{(f)output}})
             _DBJUMP_CACHE_VALID=1

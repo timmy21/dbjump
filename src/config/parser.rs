@@ -60,28 +60,41 @@ impl Config {
     }
 }
 
+impl std::fmt::Display for DatabaseEngine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DatabaseEngine::ClickHouse => write!(f, "clickhouse"),
+            DatabaseEngine::PostgreSQL => write!(f, "postgresql"),
+            DatabaseEngine::MySQL => write!(f, "mysql"),
+            DatabaseEngine::MongoDB => write!(f, "mongodb"),
+        }
+    }
+}
+
 impl DatabaseConfig {
     pub fn format_info(&self, hide_password: bool) -> String {
-        let mut lines = vec![format!("  Alias: {}", self.alias)];
-        lines.push(format!("  Engine: {:?}", self.engine));
+        let mut lines = Vec::new();
+
+        lines.push(format!("  Alias:    {}", self.alias));
+        lines.push(format!("  Engine:   {}", self.engine));
 
         if let Some(ref host) = self.host {
-            lines.push(format!("  Host: {}", host));
+            lines.push(format!("  Host:     {}", host));
         }
 
         if let Some(port) = self.port {
-            lines.push(format!("  Port: {}", port));
+            lines.push(format!("  Port:     {}", port));
         }
 
         if let Some(ref user) = self.user {
-            lines.push(format!("  User: {}", user));
+            lines.push(format!("  User:     {}", user));
         }
 
-        if let Some(ref password) = self.password {
+        if self.password.is_some() {
             let password_display = if hide_password {
-                "***".to_string()
+                "********"
             } else {
-                password.clone()
+                self.password.as_deref().unwrap()
             };
             lines.push(format!("  Password: {}", password_display));
         }
@@ -91,10 +104,31 @@ impl DatabaseConfig {
         }
 
         if !self.options.is_empty() {
-            lines.push(format!("  Options: {}", self.options.join(" ")));
+            lines.push(format!("  Options:  {}", self.options.join(" ")));
         }
 
         lines.join("\n")
+    }
+
+    /// Returns a short summary like "clickhouse://user@host:port/db"
+    pub fn format_summary(&self) -> String {
+        let engine = self.engine.to_string();
+        let user_part = self.user.as_deref().unwrap_or("");
+        let host = self.host.as_deref().unwrap_or("localhost");
+        let db = self.database.as_deref().unwrap_or("");
+
+        let mut summary = format!("{}://", engine);
+        if !user_part.is_empty() {
+            summary.push_str(&format!("{}@", user_part));
+        }
+        summary.push_str(host);
+        if let Some(port) = self.port {
+            summary.push_str(&format!(":{}", port));
+        }
+        if !db.is_empty() {
+            summary.push_str(&format!("/{}", db));
+        }
+        summary
     }
 }
 
