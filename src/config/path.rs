@@ -88,6 +88,40 @@ pub fn init_config_file(force: bool) -> Result<PathBuf> {
 # alias = "local-postgres"
 # engine = "postgresql"
 # # Will use psql defaults: localhost:5432, user=$USER
+
+# Example MySQL connection:
+# [[database]]
+# alias = "dev-mysql"
+# engine = "mysql"
+# host = "localhost"
+# port = 3306
+# user = "root"
+# password = "secret"
+# database = "myapp"  # optional
+# options = []  # optional
+
+# Example MySQL connection (using defaults):
+# [[database]]
+# alias = "local-mysql"
+# engine = "mysql"
+# # Will use mysql defaults: localhost:3306, user=$USER
+
+# Example MongoDB connection:
+# [[database]]
+# alias = "dev-mongo"
+# engine = "mongodb"
+# host = "localhost"
+# port = 27017
+# user = "admin"
+# password = "secret"
+# database = "myapp"  # optional
+# options = []  # optional
+
+# Example MongoDB connection (using defaults):
+# [[database]]
+# alias = "local-mongo"
+# engine = "mongodb"
+# # Will use mongosh defaults: localhost:27017
 "#;
 
     fs::write(&config_path, template)?;
