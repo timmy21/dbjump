@@ -4,5 +4,5 @@ pub mod database;
 pub mod error;
 pub mod utils;
 
-pub use config::{Config, DatabaseConfig, DatabaseEngine};
+pub use config::{Config, ConnectionConfig, DatabaseEngine};
 pub use error::{DbJumpError, Result};

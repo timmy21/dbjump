@@ -6,11 +6,11 @@ use crate::error::{DbJumpError, Result};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Config {
-    pub database: Vec<DatabaseConfig>,
+    pub connection: Vec<ConnectionConfig>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct DatabaseConfig {
+pub struct ConnectionConfig {
     pub alias: String,
     pub engine: DatabaseEngine,
     #[serde(default)]
@@ -79,8 +79,8 @@ impl Config {
         toml::from_str(&content).map_err(|e| DbJumpError::ConfigParseError(e.to_string()))
     }
 
-    pub fn find_by_alias(&self, alias: &str) -> Result<&DatabaseConfig> {
-        self.database
+    pub fn find_by_alias(&self, alias: &str) -> Result<&ConnectionConfig> {
+        self.connection
             .iter()
             .find(|db| db.alias == alias)
             .ok_or_else(|| DbJumpError::AliasNotFound(alias.to_string()))
@@ -99,7 +99,7 @@ impl std::fmt::Display for DatabaseEngine {
     }
 }
 
-impl DatabaseConfig {
+impl ConnectionConfig {
     pub fn format_info(&self, hide_password: bool) -> String {
         let mut lines = Vec::new();
 
@@ -167,7 +167,7 @@ mod tests {
     #[test]
     fn test_parse_config() {
         let toml_str = r#"
-[[database]]
+[[connection]]
 alias = "test-db"
 engine = "clickhouse"
 host = "localhost"
@@ -179,9 +179,9 @@ options = ["--multiline"]
         "#;
 
         let config: Config = toml::from_str(toml_str).unwrap();
-        assert_eq!(config.database.len(), 1);
-        assert_eq!(config.database[0].alias, "test-db");
-        assert_eq!(config.database[0].engine, DatabaseEngine::ClickHouse);
+        assert_eq!(config.connection.len(), 1);
+        assert_eq!(config.connection[0].alias, "test-db");
+        assert_eq!(config.connection[0].engine, DatabaseEngine::ClickHouse);
     }
 
     #[test]
@@ -189,30 +189,30 @@ options = ["--multiline"]
         for engine_str in &["clickhouse", "ClickHouse", "CLICKHOUSE", "Clickhouse"] {
             let toml_str = format!(
                 r#"
-[[database]]
+[[connection]]
 alias = "test"
 engine = "{}"
 "#,
                 engine_str
             );
             let config: Config = toml::from_str(&toml_str).unwrap();
-            assert_eq!(config.database[0].engine, DatabaseEngine::ClickHouse);
+            assert_eq!(config.connection[0].engine, DatabaseEngine::ClickHouse);
         }
 
         // "postgres" should also be accepted as an alias for PostgreSQL
         let toml_str = r#"
-[[database]]
+[[connection]]
 alias = "test"
 engine = "postgres"
 "#;
         let config: Config = toml::from_str(toml_str).unwrap();
-        assert_eq!(config.database[0].engine, DatabaseEngine::PostgreSQL);
+        assert_eq!(config.connection[0].engine, DatabaseEngine::PostgreSQL);
     }
 
     #[test]
     fn test_parse_engine_unknown() {
         let toml_str = r#"
-[[database]]
+[[connection]]
 alias = "test"
 engine = "oracle"
 "#;
@@ -225,17 +225,17 @@ engine = "oracle"
     #[test]
     fn test_parse_config_minimal() {
         let toml_str = r#"
-[[database]]
+[[connection]]
 alias = "minimal-db"
 engine = "clickhouse"
         "#;
 
         let config: Config = toml::from_str(toml_str).unwrap();
-        assert_eq!(config.database.len(), 1);
-        assert_eq!(config.database[0].alias, "minimal-db");
-        assert!(config.database[0].host.is_none());
-        assert!(config.database[0].port.is_none());
-        assert!(config.database[0].user.is_none());
-        assert!(config.database[0].password.is_none());
+        assert_eq!(config.connection.len(), 1);
+        assert_eq!(config.connection[0].alias, "minimal-db");
+        assert!(config.connection[0].host.is_none());
+        assert!(config.connection[0].port.is_none());
+        assert!(config.connection[0].user.is_none());
+        assert!(config.connection[0].password.is_none());
     }
 }

@@ -15,14 +15,14 @@ fn config_with(content: &str) -> (TempDir, std::path::PathBuf) {
 }
 
 const SAMPLE_CONFIG: &str = r#"
-[[database]]
+[[connection]]
 alias = "test-ch"
 engine = "clickhouse"
 host = "10.0.0.1"
 port = 9000
 user = "default"
 
-[[database]]
+[[connection]]
 alias = "test-pg"
 engine = "postgresql"
 host = "10.0.0.2"
@@ -131,14 +131,14 @@ fn list_json_is_valid() {
 
 #[test]
 fn list_empty_config() {
-    let (_dir, config_path) = config_with("database = []\n");
+    let (_dir, config_path) = config_with("connection = []\n");
 
     dbjump()
         .env("DBJUMP_CONFIG", &config_path)
         .arg("list")
         .assert()
         .success()
-        .stdout(predicate::str::contains("No databases configured"));
+        .stdout(predicate::str::contains("No connections configured"));
 }
 
 // --- info ---
@@ -195,11 +195,11 @@ fn validate_valid_config() {
 #[test]
 fn validate_duplicate_alias() {
     let config = r#"
-[[database]]
+[[connection]]
 alias = "dup"
 engine = "clickhouse"
 
-[[database]]
+[[connection]]
 alias = "dup"
 engine = "postgresql"
 "#;
@@ -216,7 +216,7 @@ engine = "postgresql"
 #[test]
 fn validate_whitespace_field_rejected() {
     let config = r#"
-[[database]]
+[[connection]]
 alias = "bad"
 engine = "clickhouse"
 host = "   "
@@ -234,7 +234,7 @@ host = "   "
 #[test]
 fn validate_invalid_alias_format() {
     let config = r#"
-[[database]]
+[[connection]]
 alias = "bad alias!"
 engine = "clickhouse"
 "#;
@@ -263,7 +263,7 @@ fn missing_config_file() {
 #[test]
 fn invalid_engine_name() {
     let config = r#"
-[[database]]
+[[connection]]
 alias = "test"
 engine = "oracle"
 "#;
@@ -280,11 +280,11 @@ engine = "oracle"
 #[test]
 fn engine_case_insensitive() {
     let config = r#"
-[[database]]
+[[connection]]
 alias = "test-upper"
 engine = "ClickHouse"
 
-[[database]]
+[[connection]]
 alias = "test-alias"
 engine = "postgres"
 "#;

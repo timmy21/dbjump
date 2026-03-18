@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use crate::config::DatabaseConfig;
+use crate::config::ConnectionConfig;
 use crate::database::types::DatabaseConnector;
 use crate::error::{DbJumpError, Result};
 
@@ -8,7 +8,7 @@ use crate::error::{DbJumpError, Result};
 use std::os::unix::process::CommandExt;
 
 pub fn execute_connection(
-    config: &DatabaseConfig,
+    config: &ConnectionConfig,
     connector: &dyn DatabaseConnector,
     extra_args: &[String],
 ) -> Result<()> {

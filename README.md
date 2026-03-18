@@ -112,7 +112,7 @@ vim ~/.config/dbjump/config.toml
 
 ```toml
 # ClickHouse - 完整配置
-[[database]]
+[[connection]]
 alias = "prod-clickhouse"
 engine = "clickhouse"
 host = "192.168.1.100"
@@ -123,13 +123,13 @@ database = "default"  # 可选
 options = ["--multiline"]  # 可选
 
 # ClickHouse - 使用默认值（localhost:9000, user=default）
-[[database]]
+[[connection]]
 alias = "local-clickhouse"
 engine = "clickhouse"
 # 不指定任何参数，使用 clickhouse client 的默认值
 
 # PostgreSQL - 完整配置
-[[database]]
+[[connection]]
 alias = "dev-postgres"
 engine = "postgresql"
 host = "localhost"
@@ -140,13 +140,13 @@ database = "myapp"  # 可选
 options = []  # 可选
 
 # PostgreSQL - 使用默认值（localhost:5432, user=$USER）
-[[database]]
+[[connection]]
 alias = "local-postgres"
 engine = "postgresql"
 database = "mydb"  # 只指定数据库名
 
 # MySQL - 完整配置
-[[database]]
+[[connection]]
 alias = "dev-mysql"
 engine = "mysql"
 host = "localhost"
@@ -156,13 +156,13 @@ password = "secret123"
 database = "myapp"
 
 # MySQL - 使用默认值（localhost:3306）
-[[database]]
+[[connection]]
 alias = "local-mysql"
 engine = "mysql"
 database = "mydb"
 
 # MongoDB - 完整配置
-[[database]]
+[[connection]]
 alias = "dev-mongo"
 engine = "mongodb"
 host = "localhost"
@@ -172,7 +172,7 @@ password = "secret123"
 database = "myapp"
 
 # MongoDB - 使用默认值（localhost:27017）
-[[database]]
+[[connection]]
 alias = "local-mongo"
 engine = "mongodb"
 ```

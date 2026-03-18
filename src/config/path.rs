@@ -56,7 +56,7 @@ pub fn init_config_file(force: bool) -> Result<PathBuf> {
 # If not specified, the database CLI tool will use its default values.
 
 # Example ClickHouse connection (with all parameters):
-# [[database]]
+# [[connection]]
 # alias = "prod-clickhouse"
 # engine = "clickhouse"
 # host = "192.168.1.100"
@@ -67,13 +67,13 @@ pub fn init_config_file(force: bool) -> Result<PathBuf> {
 # options = ["--multiline"]  # optional
 
 # Example ClickHouse connection (using defaults):
-# [[database]]
+# [[connection]]
 # alias = "local-clickhouse"
 # engine = "clickhouse"
 # # Will use clickhouse defaults: localhost:9000, user=default
 
 # Example PostgreSQL connection:
-# [[database]]
+# [[connection]]
 # alias = "dev-postgres"
 # engine = "postgresql"
 # host = "localhost"
@@ -84,13 +84,13 @@ pub fn init_config_file(force: bool) -> Result<PathBuf> {
 # options = []  # optional
 
 # Example PostgreSQL connection (using defaults):
-# [[database]]
+# [[connection]]
 # alias = "local-postgres"
 # engine = "postgresql"
 # # Will use psql defaults: localhost:5432, user=$USER
 
 # Example MySQL connection:
-# [[database]]
+# [[connection]]
 # alias = "dev-mysql"
 # engine = "mysql"
 # host = "localhost"
@@ -101,13 +101,13 @@ pub fn init_config_file(force: bool) -> Result<PathBuf> {
 # options = []  # optional
 
 # Example MySQL connection (using defaults):
-# [[database]]
+# [[connection]]
 # alias = "local-mysql"
 # engine = "mysql"
 # # Will use mysql defaults: localhost:3306, user=$USER
 
 # Example MongoDB connection:
-# [[database]]
+# [[connection]]
 # alias = "dev-mongo"
 # engine = "mongodb"
 # host = "localhost"
@@ -118,7 +118,7 @@ pub fn init_config_file(force: bool) -> Result<PathBuf> {
 # options = []  # optional
 
 # Example MongoDB connection (using defaults):
-# [[database]]
+# [[connection]]
 # alias = "local-mongo"
 # engine = "mongodb"
 # # Will use mongosh defaults: localhost:27017

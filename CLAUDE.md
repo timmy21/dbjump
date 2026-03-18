@@ -37,7 +37,7 @@ cargo install --path .
   - `completions.rs` - Shell completion generation
 
 - **`config/`** - Configuration management
-  - `parser.rs` - TOML parsing, defines `Config`, `DatabaseConfig`, and `DatabaseEngine` enum
+  - `parser.rs` - TOML parsing, defines `Config`, `ConnectionConfig`, and `DatabaseEngine` enum
   - `path.rs` - Config file path resolution (`~/.config/dbjump/config.toml`)
   - `validator.rs` - Configuration validation logic
 
@@ -77,7 +77,7 @@ cargo install --path .
 
 Location: `~/.config/dbjump/config.toml` (overridable via `DBJUMP_CONFIG` env var)
 
-The config uses TOML with a `[[database]]` array. All fields except `alias` and `engine` are optional.
+The config uses TOML with a `[[connection]]` array. All fields except `alias` and `engine` are optional.
 
 ## Security Considerations
 

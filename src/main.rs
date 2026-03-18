@@ -1,6 +1,6 @@
 use clap::{CommandFactory, Parser};
 use dbjump::cli::{generate_completions, generate_shell_init, Cli, Commands};
-use dbjump::config::{get_config_path, validate_config, Config, DatabaseConfig};
+use dbjump::config::{get_config_path, validate_config, Config, ConnectionConfig};
 use dbjump::database::{execute_connection, get_connector};
 use dbjump::error::{DbJumpError, Result};
 use std::process;
@@ -34,14 +34,14 @@ fn run() -> Result<()> {
 
         Some(Commands::List { format }) => {
             let config = load_config()?;
-            if config.database.is_empty() {
-                println!("No databases configured. Run 'dbjump init' to get started.");
+            if config.connection.is_empty() {
+                println!("No connections configured. Run 'dbjump init' to get started.");
                 return Ok(());
             }
             match format {
                 dbjump::cli::args::ListFormat::Text => {
-                    let alias_w = column_width(&config.database, |db| db.alias.len(), 5);
-                    let engine_w = column_width(&config.database, |db| db.engine.to_string().len(), 6);
+                    let alias_w = column_width(&config.connection, |c| c.alias.len(), 5);
+                    let engine_w = column_width(&config.connection, |c| c.engine.to_string().len(), 6);
 
                     println!(
                         "  {:<alias_w$}  {:<engine_w$}  {}",
@@ -52,24 +52,24 @@ fn run() -> Result<()> {
                         engine_w = engine_w,
                     );
 
-                    for db in &config.database {
+                    for conn in &config.connection {
                         println!(
                             "  {:<alias_w$}  {:<engine_w$}  {}",
-                            db.alias,
-                            db.engine,
-                            db.format_summary(),
+                            conn.alias,
+                            conn.engine,
+                            conn.format_summary(),
                             alias_w = alias_w,
                             engine_w = engine_w,
                         );
                     }
                 }
                 dbjump::cli::args::ListFormat::Plain => {
-                    for db in &config.database {
-                        println!("{}", db.alias);
+                    for conn in &config.connection {
+                        println!("{}", conn.alias);
                     }
                 }
                 dbjump::cli::args::ListFormat::Json => {
-                    let json = serde_json::to_string_pretty(&config.database)
+                    let json = serde_json::to_string_pretty(&config.connection)
                         .map_err(|e| DbJumpError::ConfigError(e.to_string()))?;
                     println!("{}", json);
                 }
@@ -108,8 +108,8 @@ fn run() -> Result<()> {
     }
 }
 
-fn column_width(databases: &[DatabaseConfig], f: fn(&DatabaseConfig) -> usize, min: usize) -> usize {
-    databases.iter().map(f).max().unwrap_or(min).max(min)
+fn column_width(connections: &[ConnectionConfig], f: fn(&ConnectionConfig) -> usize, min: usize) -> usize {
+    connections.iter().map(f).max().unwrap_or(min).max(min)
 }
 
 fn load_config() -> Result<Config> {

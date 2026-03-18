@@ -1,13 +1,13 @@
 use std::process::Command;
 
-use crate::config::DatabaseConfig;
+use crate::config::ConnectionConfig;
 use crate::database::types::DatabaseConnector;
 use crate::error::Result;
 
 pub struct MySQLConnector;
 
 impl DatabaseConnector for MySQLConnector {
-    fn build_command(&self, config: &DatabaseConfig) -> Result<Command> {
+    fn build_command(&self, config: &ConnectionConfig) -> Result<Command> {
         let mut cmd = Command::new(self.cli_tool_name());
 
         // Password via env var to avoid process list exposure
@@ -50,8 +50,8 @@ mod tests {
     use super::*;
     use crate::config::DatabaseEngine;
 
-    fn create_test_config() -> DatabaseConfig {
-        DatabaseConfig {
+    fn create_test_config() -> ConnectionConfig {
+        ConnectionConfig {
             alias: "test".to_string(),
             engine: DatabaseEngine::MySQL,
             host: Some("localhost".to_string()),

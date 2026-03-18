@@ -48,7 +48,7 @@ function _dbjump_fzf_select() {{
     fi
     local aliases=($(_dbjump_get_aliases))
     if [[ ${{#aliases[@]}} -eq 0 ]]; then
-        echo "Error: No databases configured. Run 'dbjump init' first." >&2
+        echo "Error: No connections configured. Run 'dbjump init' first." >&2
         return 1
     fi
     local prompt_text="Select database"
@@ -84,8 +84,8 @@ _dbjump() {{
             subcommands=(
                 'connect:Connect to a database'
                 'init:Initialize configuration file'
-                'list:List all configured databases'
-                'info:Show connection information for a database'
+                'list:List all configured connections'
+                'info:Show connection details'
                 'validate:Validate configuration file'
                 'completions:Generate shell completions'
                 'shell:Generate shell integration code'

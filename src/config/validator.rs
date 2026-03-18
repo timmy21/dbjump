@@ -7,7 +7,7 @@ use crate::error::{DbJumpError, Result};
 pub fn validate_config(config: &Config) -> Result<()> {
     let mut aliases = HashSet::new();
 
-    for db in &config.database {
+    for db in &config.connection {
         // Check alias uniqueness
         if !aliases.insert(&db.alias) {
             return Err(DbJumpError::DuplicateAlias(db.alias.clone()));
@@ -71,10 +71,10 @@ fn is_valid_alias(alias: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::{DatabaseConfig, DatabaseEngine};
+    use crate::config::{ConnectionConfig, DatabaseEngine};
 
-    fn create_test_config(alias: &str) -> DatabaseConfig {
-        DatabaseConfig {
+    fn create_test_config(alias: &str) -> ConnectionConfig {
+        ConnectionConfig {
             alias: alias.to_string(),
             engine: DatabaseEngine::ClickHouse,
             host: Some("localhost".to_string()),
@@ -104,7 +104,7 @@ mod tests {
     #[test]
     fn test_duplicate_alias_detection() {
         let config = Config {
-            database: vec![create_test_config("db1"), create_test_config("db1")],
+            connection: vec![create_test_config("db1"), create_test_config("db1")],
         };
 
         assert!(matches!(
@@ -118,7 +118,7 @@ mod tests {
         let mut db = create_test_config("db1");
         db.host = Some("   ".to_string());
         let config = Config {
-            database: vec![db],
+            connection: vec![db],
         };
         assert!(matches!(
             validate_config(&config),
@@ -128,7 +128,7 @@ mod tests {
         let mut db = create_test_config("db2");
         db.user = Some("  \t ".to_string());
         let config = Config {
-            database: vec![db],
+            connection: vec![db],
         };
         assert!(matches!(
             validate_config(&config),

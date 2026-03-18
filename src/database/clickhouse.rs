@@ -1,13 +1,13 @@
 use std::process::Command;
 
-use crate::config::DatabaseConfig;
+use crate::config::ConnectionConfig;
 use crate::database::types::DatabaseConnector;
 use crate::error::Result;
 
 pub struct ClickHouseConnector;
 
 impl DatabaseConnector for ClickHouseConnector {
-    fn build_command(&self, config: &DatabaseConfig) -> Result<Command> {
+    fn build_command(&self, config: &ConnectionConfig) -> Result<Command> {
         let mut cmd = Command::new("clickhouse");
         cmd.arg("client");
 
@@ -51,8 +51,8 @@ mod tests {
     use super::*;
     use crate::config::DatabaseEngine;
 
-    fn create_test_config() -> DatabaseConfig {
-        DatabaseConfig {
+    fn create_test_config() -> ConnectionConfig {
+        ConnectionConfig {
             alias: "test".to_string(),
             engine: DatabaseEngine::ClickHouse,
             host: Some("localhost".to_string()),

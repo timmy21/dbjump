@@ -16,7 +16,7 @@ pub struct Cli {
 pub enum Commands {
     /// Connect to a database
     Connect {
-        /// Database alias
+        /// Connection alias
         alias: String,
 
         /// Extra arguments to pass to the database CLI tool
@@ -31,16 +31,16 @@ pub enum Commands {
         force: bool,
     },
 
-    /// List all configured databases
+    /// List all configured connections
     List {
         /// Output format
         #[arg(short, long, value_name = "FORMAT", default_value = "text")]
         format: ListFormat,
     },
 
-    /// Show connection information for a database
+    /// Show connection details
     Info {
-        /// Database alias
+        /// Connection alias
         alias: String,
     },
 

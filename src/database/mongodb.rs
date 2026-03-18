@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use crate::config::DatabaseConfig;
+use crate::config::ConnectionConfig;
 use crate::database::types::DatabaseConnector;
 use crate::error::Result;
 
@@ -27,7 +27,7 @@ fn uri_encode(input: &str) -> String {
 }
 
 impl MongoDBConnector {
-    fn build_connection_string(&self, config: &DatabaseConfig) -> Option<String> {
+    fn build_connection_string(&self, config: &ConnectionConfig) -> Option<String> {
         // If no connection params at all, return None to use mongosh defaults
         if config.host.is_none()
             && config.port.is_none()
@@ -70,7 +70,7 @@ impl MongoDBConnector {
 }
 
 impl DatabaseConnector for MongoDBConnector {
-    fn build_command(&self, config: &DatabaseConfig) -> Result<Command> {
+    fn build_command(&self, config: &ConnectionConfig) -> Result<Command> {
         let mut cmd = Command::new(self.cli_tool_name());
 
         if let Some(conn_string) = self.build_connection_string(config) {
@@ -95,8 +95,8 @@ mod tests {
     use super::*;
     use crate::config::DatabaseEngine;
 
-    fn create_test_config() -> DatabaseConfig {
-        DatabaseConfig {
+    fn create_test_config() -> ConnectionConfig {
+        ConnectionConfig {
             alias: "test".to_string(),
             engine: DatabaseEngine::MongoDB,
             host: Some("localhost".to_string()),
@@ -119,7 +119,7 @@ mod tests {
     #[test]
     fn test_build_connection_string_no_params() {
         let connector = MongoDBConnector;
-        let config = DatabaseConfig {
+        let config = ConnectionConfig {
             alias: "test".to_string(),
             engine: DatabaseEngine::MongoDB,
             host: None,
@@ -135,7 +135,7 @@ mod tests {
     #[test]
     fn test_build_connection_string_host_only() {
         let connector = MongoDBConnector;
-        let config = DatabaseConfig {
+        let config = ConnectionConfig {
             alias: "test".to_string(),
             engine: DatabaseEngine::MongoDB,
             host: Some("myhost".to_string()),
@@ -164,7 +164,7 @@ mod tests {
     #[test]
     fn test_build_connection_string_special_chars() {
         let connector = MongoDBConnector;
-        let config = DatabaseConfig {
+        let config = ConnectionConfig {
             alias: "test".to_string(),
             engine: DatabaseEngine::MongoDB,
             host: Some("localhost".to_string()),

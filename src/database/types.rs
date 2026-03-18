@@ -1,11 +1,11 @@
 use std::process::Command;
 
-use crate::config::DatabaseConfig;
+use crate::config::ConnectionConfig;
 use crate::error::{DbJumpError, Result};
 
 pub trait DatabaseConnector {
     /// Build the command to execute
-    fn build_command(&self, config: &DatabaseConfig) -> Result<Command>;
+    fn build_command(&self, config: &ConnectionConfig) -> Result<Command>;
 
     /// Get the name of the CLI tool
     fn cli_tool_name(&self) -> &str;
